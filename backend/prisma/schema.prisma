@@ -1,0 +1,111 @@
+// Define the datasource (your database)
+datasource db {
+  provider = "postgresql" // or your preferred relational DB like MySQL
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int         @id @default(autoincrement()) // Unique user identifier
+  username  String      @unique
+  email     String      @unique
+  password  String // Store hashed password
+  role      Role        @default(USER) // Role-based access (user/admin)
+  bookings  Booking[] // One-to-many relationship with bookings
+  receipts  Receipt[] // One-to-many relationship with receipts
+  ownership Ownership[] // One-to-many relationship with ownership records
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Instrument {
+  id                Int            @id @default(autoincrement()) // Unique instrument ID
+  name              String // Name of the instrument
+  type              InstrumentType // Type (bond, commodity, etc.)
+  currentPrice      Float // Current price of the instrument
+  estimatedReturn   Float // Estimated return in percentage
+  maturityTime      Int // Maturity time in days
+  availableUnits    Float // Available units of the instrument
+  totalUnits        Float // Total units available
+  fractionalSupport Boolean        @default(true) // If fractional purchase is allowed
+
+  bookings  Booking[] // One-to-many relationship with bookings
+  ownership Ownership[] // One-to-many relationship with ownership records
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id           Int           @id @default(autoincrement()) // Unique booking ID
+  userId       Int // Reference to the user who booked the instrument
+  instrumentId Int // Reference to the instrument being booked
+  bookedUnits  Float // Number of units booked
+  status       BookingStatus @default(PENDING) // Booking status (Pending, Purchased, Expired, etc.)
+  bookingTime  DateTime      @default(now()) // Time when the booking was made
+  expiresAt    DateTime // Time when the booking expires (6 hours from booking)
+
+  user       User       @relation(fields: [userId], references: [id])
+  instrument Instrument @relation(fields: [instrumentId], references: [id])
+  receipts   Receipt[] // One-to-many relation to Receipt
+
+  @@index([instrumentId, userId]) // Index for faster queries
+}
+
+model Receipt {
+  id         Int           @id @default(autoincrement()) // Unique receipt ID
+  bookingId  Int // Reference to the booking that the receipt is attached to
+  userId     Int // Reference to the user who owns the receipt
+  receiptUrl String // URL or path to the uploaded receipt image/file
+  status     ReceiptStatus @default(PENDING) // Status of receipt verification
+  verifiedAt DateTime? // Timestamp of when the receipt was verified (nullable)
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ownership {
+  id            Int      @id @default(autoincrement()) // Unique ownership record ID
+  userId        Int // Reference to the user who owns the instrument
+  instrumentId  Int // Reference to the instrument owned
+  ownedUnits    Float // Number of units owned by the user
+  ownershipTime DateTime @default(now()) // When the instrument was marked as owned
+
+  user       User       @relation(fields: [userId], references: [id])
+  instrument Instrument @relation(fields: [instrumentId], references: [id])
+
+  @@unique([userId, instrumentId]) // Unique constraint to ensure a user can't own the same instrument twice
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum InstrumentType {
+  BOND
+  COMMODITY
+  FUND
+  STOCK
+  OTHER
+}
+
+enum BookingStatus {
+  PENDING
+  PURCHASED
+  EXPIRED
+  CANCELLED
+}
+
+enum ReceiptStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
