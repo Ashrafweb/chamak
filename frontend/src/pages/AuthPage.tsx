@@ -12,8 +12,8 @@ const AuthPage = () => {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (user) navigate("/auth");
-	}, []);
+		if (user) navigate("/");
+	}, [user, navigate]);
 	const toggleForm = () => {
 		setIsLogin(!isLogin); // Toggle between forms
 	};
