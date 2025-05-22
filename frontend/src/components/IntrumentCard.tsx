@@ -32,9 +32,9 @@ const InstrumentCard: React.FC<InstrumentCardProps> = ({ instrument }) => {
 		<div className='card bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:scale-105'>
 			{/* Image Section */}
 			<img
-				src={instrument.imageUrl}
+				src='/assets/stock_icon.png'
 				alt={instrument.name}
-				className='w-full h-48 object-cover rounded-lg mb-4'
+				className='w-[100px] object-cover rounded-lg mb-4'
 			/>
 			<h3 className='text-xl font-semibold text-gray-800'>{instrument.name}</h3>
 			<p className='text-sm text-gray-600'>Price: ${instrument.currentPrice}</p>

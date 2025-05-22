@@ -7,6 +7,8 @@ exports.logoutUser = exports.loginUser = exports.getUser = exports.createUser = 
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prismaClient_1 = __importDefault(require("../models/prismaClient"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 // Helper function to set cookie
 const setTokenCookie = (res, token) => {
@@ -52,7 +54,7 @@ const createUser = async (req, res) => {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                isAdmin: user?.role,
+                role: user?.role,
             },
             token,
         });
@@ -68,7 +70,7 @@ const getUser = async (req, res) => {
     try {
         // Fetch the user from the database using the authenticated user ID
         const user = await prismaClient_1.default.user.findUnique({
-            where: { id: req.user?.id ? Number(req.user.id) : undefined },
+            where: { id: req.user?.id ? req.user.id : undefined },
         });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -109,7 +111,7 @@ const loginUser = async (req, res) => {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                isAdmin: user?.role,
+                role: user?.role,
             },
             token,
         });

@@ -26,7 +26,7 @@ const getInstrumentsById = async (req, res) => {
     const { id } = req.params;
     try {
         const instrument = await prisma.instrument.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         });
         if (!instrument) {
             res.status(404).json({ message: "Instrument not found" });

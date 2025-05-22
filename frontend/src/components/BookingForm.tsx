@@ -4,7 +4,7 @@ import { useBookInstrumentMutation } from "../redux/slices/apiSlice";
 import { useAuth } from "../hooks/useAuth";
 
 interface BookingFormProps {
-	instrumentId: number;
+	instrumentId: string;
 	onBookingComplete: () => void;
 }
 

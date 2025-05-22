@@ -3,6 +3,7 @@ import "./libs/cronJob";
 import IntrumentsRoutes from "./routes/instrumentRoutes";
 import userRouter from "./routes/userRoutes";
 import bookingRoutes from "./routes/bookingRoutes";
+import receiptRoutes from "./routes/receiptRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -29,6 +30,7 @@ app.use("/api/instruments", IntrumentsRoutes);
 app.use("/api/users", userRouter);
 
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/bookings/receipt", receiptRoutes);
 //app.use('/api/receipts', receiptRoutes);
 
 app.listen(4000, () => {

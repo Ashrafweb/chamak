@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../models/prismaClient"; // Prisma client instance
 import { z } from "zod";
-import path from "path";
 import { Receipt } from "../types";
-
 // Zod validation for the receipt response
 const receiptResponseSchema = z.object({
 	id: z.number().int(),
@@ -18,12 +16,15 @@ export const uploadReceipt = async (req: Request, res: Response) => {
 	// Check if the file is available in the request
 	if (!req.file) {
 		return res.status(400).json({ message: "No file uploaded" });
+	} else {
+		console.log(req.file.filename);
 	}
 
-	const { bookingId }: { bookingId: number } = req.body;
+	const { bookingId }: { bookingId: string } = req.body;
 
 	try {
 		// 1. Check if the booking exists
+		console.log(bookingId);
 		const booking = await prisma.booking.findUnique({
 			where: { id: bookingId },
 		});
@@ -50,41 +51,5 @@ export const uploadReceipt = async (req: Request, res: Response) => {
 		res
 			.status(500)
 			.json({ message: "Error uploading receipt", error: error.message });
-	}
-};
-
-// Controller to update receipt status (admin functionality)
-export const updateReceiptStatus = async (req: Request, res: Response) => {
-	const {
-		receiptId,
-		status,
-	}: { receiptId: number; status: "PENDING" | "VERIFIED" | "REJECTED" } =
-		req.body;
-
-	try {
-		// 1. Check if the receipt exists
-		const receipt = await prisma.receipt.findUnique({
-			where: { id: receiptId },
-		});
-
-		if (!receipt) {
-			return res.status(404).json({ message: "Receipt not found" });
-		}
-
-		// 2. Update the receipt status
-		const updatedReceipt = await prisma.receipt.update({
-			where: { id: receiptId },
-			data: {
-				status,
-				verifiedAt: status === "VERIFIED" ? new Date().toISOString() : null,
-			},
-		});
-
-		res.status(200).json(updatedReceipt);
-	} catch (error: any) {
-		console.error(error);
-		res
-			.status(500)
-			.json({ message: "Error updating receipt status", error: error.message });
 	}
 };

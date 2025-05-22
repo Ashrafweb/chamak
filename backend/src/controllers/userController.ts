@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../models/prismaClient";
+import dotenv from "dotenv";
+dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 // Helper function to set cookie
@@ -58,7 +60,7 @@ export const createUser = async (req: Request, res: Response) => {
 				id: user.id,
 				username: user.username,
 				email: user.email,
-				isAdmin: user?.role,
+				role: user?.role,
 			},
 			token,
 		});
@@ -73,7 +75,7 @@ export const getUser = async (req: Request, res: Response) => {
 	try {
 		// Fetch the user from the database using the authenticated user ID
 		const user = await prisma.user.findUnique({
-			where: { id: req.user?.id ? Number(req.user.id) : undefined },
+			where: { id: req.user?.id ? req.user.id : undefined },
 		});
 
 		if (!user) {
@@ -125,7 +127,7 @@ export const loginUser = async (req: Request, res: Response) => {
 				id: user.id,
 				username: user.username,
 				email: user.email,
-				isAdmin: user?.role,
+				role: user?.role,
 			},
 			token,
 		});

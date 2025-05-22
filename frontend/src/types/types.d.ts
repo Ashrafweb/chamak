@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface Instrument {
-	id: number;
+	id: string;
 	name: string;
 	currentPrice: number;
 	estimatedReturn: number;
@@ -28,7 +29,7 @@ declare global {
 
 // --- User Types ---
 export interface User {
-	id: number; // User ID (from the database)
+	id: string; // User ID (from the database)
 	username: string; // User's username
 	email: string; // User's email
 	password: string; // User's hashed password
@@ -47,7 +48,7 @@ export interface LoginBody {
 }
 
 export interface UserResponse {
-	id: number;
+	id: string;
 	username: string;
 	email: string;
 	role: string;
@@ -55,7 +56,7 @@ export interface UserResponse {
 
 // --- Instrument Types ---
 export interface Instrument {
-	id: number; // Instrument ID (from the database)
+	id: string; // Instrument ID (from the database)
 	name: string; // Name of the instrument (e.g., "Government Bond A")
 	type: string; // Type of the instrument (e.g., "BOND", "STOCK")
 	currentPrice: number; // Current price of the instrument
@@ -78,7 +79,7 @@ export interface CreateInstrumentBody {
 }
 
 export interface InstrumentResponse {
-	id: number;
+	id: string;
 	name: string;
 	type: string;
 	currentPrice: number;
@@ -91,9 +92,9 @@ export interface InstrumentResponse {
 
 // --- Booking Types ---
 export interface Booking {
-	id: number; // Booking ID (from the database)
-	userId: number; // ID of the user who made the booking
-	instrumentId: number; // ID of the instrument being booked
+	id: string; // Booking ID (from the database)
+	userId: string; // ID of the user who made the booking
+	instrumentId: string; // ID of the instrument being booked
 	bookedUnits: number; // Number of units booked
 	status: string; // Booking status, e.g., "PENDING", "PURCHASED", "EXPIRED"
 	bookingTime: Date; // The time when the booking was made
@@ -101,43 +102,52 @@ export interface Booking {
 }
 
 export interface CreateBookingBody {
-	userId: number;
-	instrumentId: number;
+	userId: string;
+	instrumentId: string;
 	bookedUnits: number;
 }
 
 export interface BookingResponse {
-	id: number;
-	userId: number;
+	id: string;
+	user: any;
+	userId: string;
 	userName: string;
-	instrumentId: number;
+	instrumentId: string;
 	instrumentName: string;
 	bookedUnits: number;
 	status: string;
 	bookingTime: Date;
 	expiresAt: Date;
+	receipts?: any;
 	receiptUrl?: string;
 	receiptId?: number;
 }
 
 // --- Receipt Types ---
 export interface Receipt {
-	id: number;
-	bookingId: number;
+	id: string;
+	bookingId: string;
 	receiptUrl: string;
 	status: "PENDING" | "VERIFIED" | "REJECTED";
 	verifiedAt: Date | null;
 }
 
 export interface CreateReceiptBody {
-	bookingId: number;
+	bookingId: string;
 	receiptUrl: string;
 }
 
 export interface ReceiptResponse {
-	id: number;
-	bookingId: number;
+	id: string;
+	bookingId: string;
 	receiptUrl: string;
 	status: string;
 	verifiedAt?: Date;
+}
+
+export interface ErrorResponse {
+	status: number;
+	data: {
+		message: string;
+	};
 }

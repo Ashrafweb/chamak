@@ -33,7 +33,7 @@ export const getInstrumentsById = async (
 
 	try {
 		const instrument = await prisma.instrument.findUnique({
-			where: { id: parseInt(id) },
+			where: { id: id },
 		});
 
 		if (!instrument) {

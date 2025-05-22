@@ -4,6 +4,7 @@ import {
 	getInstrumentsById,
 	createInstrument,
 } from "../controllers/instrumentController";
+import { authMiddleware, adminMiddleware } from "../middleware/authMiddleware";
 
 const IntrumentsRoutes = express.Router();
 
@@ -14,6 +15,11 @@ IntrumentsRoutes.get("/", getInstruments);
 IntrumentsRoutes.get("/:id", getInstrumentsById);
 
 // Route to create a new instrument
-IntrumentsRoutes.post("/create", createInstrument);
+IntrumentsRoutes.post(
+	"/create",
+	authMiddleware,
+	adminMiddleware,
+	createInstrument
+);
 
 export default IntrumentsRoutes;

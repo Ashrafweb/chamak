@@ -9,7 +9,7 @@ generator client {
 }
 
 model User {
-  id        Int         @id @default(autoincrement()) // Unique user identifier
+  id        String      @id @default(uuid()) // Unique user identifier as UUID
   username  String      @unique
   email     String      @unique
   password  String // Store hashed password
@@ -23,7 +23,7 @@ model User {
 }
 
 model Instrument {
-  id                Int            @id @default(autoincrement()) // Unique instrument ID
+  id                String         @id @default(uuid()) // Unique instrument ID as UUID
   name              String // Name of the instrument
   type              InstrumentType // Type (bond, commodity, etc.)
   currentPrice      Float // Current price of the instrument
@@ -32,18 +32,18 @@ model Instrument {
   availableUnits    Float // Available units of the instrument
   totalUnits        Float // Total units available
   fractionalSupport Boolean        @default(true) // If fractional purchase is allowed
-
-  bookings  Booking[] // One-to-many relationship with bookings
-  ownership Ownership[] // One-to-many relationship with ownership records
+  imageUrl          String         @default("https://asset.cloudinary.com/dzsacbrj8/f76c30cacc2e2588a4cc3a66a6a62848")
+  bookings          Booking[] // One-to-many relationship with bookings
+  ownership         Ownership[] // One-to-many relationship with ownership records
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id           Int           @id @default(autoincrement()) // Unique booking ID
-  userId       Int // Reference to the user who booked the instrument
-  instrumentId Int // Reference to the instrument being booked
+  id           String        @id @default(uuid()) // Unique booking ID as UUID
+  userId       String // Reference to the user who booked the instrument
+  instrumentId String // Reference to the instrument being booked
   bookedUnits  Float // Number of units booked
   status       BookingStatus @default(PENDING) // Booking status (Pending, Purchased, Expired, etc.)
   bookingTime  DateTime      @default(now()) // Time when the booking was made
@@ -57,9 +57,9 @@ model Booking {
 }
 
 model Receipt {
-  id         Int           @id @default(autoincrement()) // Unique receipt ID
-  bookingId  Int // Reference to the booking that the receipt is attached to
-  userId     Int // Reference to the user who owns the receipt
+  id         String        @id @default(uuid()) // Unique receipt ID as UUID
+  bookingId  String // Reference to the booking that the receipt is attached to
+  userId     String // Reference to the user who owns the receipt
   receiptUrl String // URL or path to the uploaded receipt image/file
   status     ReceiptStatus @default(PENDING) // Status of receipt verification
   verifiedAt DateTime? // Timestamp of when the receipt was verified (nullable)
@@ -72,9 +72,9 @@ model Receipt {
 }
 
 model Ownership {
-  id            Int      @id @default(autoincrement()) // Unique ownership record ID
-  userId        Int // Reference to the user who owns the instrument
-  instrumentId  Int // Reference to the instrument owned
+  id            String   @id @default(uuid()) // Unique ownership record ID as UUID
+  userId        String // Reference to the user who owns the instrument
+  instrumentId  String // Reference to the instrument owned
   ownedUnits    Float // Number of units owned by the user
   ownershipTime DateTime @default(now()) // When the instrument was marked as owned
 
@@ -102,6 +102,7 @@ enum BookingStatus {
   PURCHASED
   EXPIRED
   CANCELLED
+  REJECTED
 }
 
 enum ReceiptStatus {

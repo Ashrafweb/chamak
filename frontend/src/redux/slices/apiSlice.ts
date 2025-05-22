@@ -7,7 +7,7 @@ export const api = createApi({
 		baseUrl: "http://localhost:4000/api/", // Update with your API's base URL
 		credentials: "include", // Ensure cookies are sent with requests (HTTP-only cookies)
 	}),
-	tagTypes: ["Auth", "Instrument"], // Define tag types for invalidating cache
+	tagTypes: ["Auth", "Instrument", "Booking", "Receipt"], // Define tag types for invalidating cache
 	endpoints: (builder) => ({
 		// Auth endpoints
 		loginUser: builder.mutation({
@@ -51,15 +51,36 @@ export const api = createApi({
 				method: "POST",
 				body: newInstrument,
 			}),
-			invalidatesTags: ["Instrument"], // Invalidate the instruments cache
 		}),
 		bookInstrument: builder.mutation({
 			query: (instrumentId) => ({
-				url: "instruments/book",
+				url: "bookings/book",
 				method: "POST",
-				body: { instrumentId },
+				body: { ...instrumentId },
 			}),
-			invalidatesTags: ["Instrument"],
+			invalidatesTags: ["Booking"],
+		}),
+		getAllBookingsByUserId: builder.query({
+			query: (userId) => `/bookings/user/${userId}`,
+			providesTags: ["Booking"],
+		}),
+		fetchBookings: builder.query({
+			query: () => "/bookings", // API endpoint to fetch bookings
+		}),
+		updateBookingStatus: builder.mutation({
+			query: ({ bookingId, receiptId, status }) => ({
+				url: "/bookings/status",
+				method: "PUT",
+				body: { bookingId, receiptId, status },
+			}),
+		}),
+		submitReceipt: builder.mutation({
+			query: ({ formData }) => ({
+				url: "/bookings/receipt/upload", // Adjust the URL for the receipt upload endpoint
+				method: "POST",
+				body: formData,
+			}),
+			invalidatesTags: ["Booking"],
 		}),
 	}),
 });
@@ -72,4 +93,8 @@ export const {
 	useGetInstrumentByIdQuery,
 	useCreateInstrumentMutation,
 	useBookInstrumentMutation,
+	useFetchBookingsQuery,
+	useUpdateBookingStatusMutation,
+	useGetAllBookingsByUserIdQuery,
+	useSubmitReceiptMutation,
 } = api;

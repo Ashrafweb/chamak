@@ -1,17 +1,20 @@
-const express = require("express");
-const {
-	uploadReceipt,
-	updateReceiptStatus,
-} = require("../controllers/receiptController");
-const upload = require("../config/multerConfig"); // Multer configuration for file uploads
-const { adminRoleMiddleware } = require("../middleware/authMiddleware"); // Admin check middleware
+import { upload } from "../controllers/fileUpload";
+import { uploadReceipt } from "../controllers/receiptController";
 
-const router = express.Router();
+import express from "express";
+import { authMiddleware } from "../middleware/authMiddleware";
+// Multer configuration for file uploads
+
+const receiptRouter = express.Router();
 
 // Route for uploading a receipt
-router.post("/upload", upload.single("receiptFile"), uploadReceipt);
+receiptRouter.post(
+	"/upload",
+	authMiddleware,
+	upload.single("receiptFile"),
+	(req, res) => {
+		uploadReceipt(req, res);
+	}
+);
 
-// Route for updating receipt status (admin only)
-router.put("/status", adminRoleMiddleware, updateReceiptStatus);
-
-module.exports = router;
+export default receiptRouter;

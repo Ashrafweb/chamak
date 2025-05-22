@@ -5,7 +5,7 @@ import type { RootState } from "../redux/store";
 const PrivateRoute = () => {
 	const { user } = useSelector((state: RootState) => state.auth);
 	console.log(user);
-	return user ? <Outlet /> : <Navigate to='/auth' replace />;
+	return user ? <Outlet /> : <Navigate to='/login' replace />;
 };
 
 export default PrivateRoute;

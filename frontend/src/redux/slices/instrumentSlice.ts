@@ -2,6 +2,7 @@
 // src/redux/instrumentSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
 import { api } from "./apiSlice";
+import type { Instrument } from "../../types/types";
 const instrumentSlice = createSlice({
 	name: "instruments",
 	initialState: {
@@ -34,12 +35,6 @@ const instrumentSlice = createSlice({
 					state.availableInstruments = state.availableInstruments.filter(
 						(instrument) => instrument.id !== payload.id
 					);
-				}
-			)
-			.addMatcher(
-				api.endpoints.getInstrumentById.matchFulfilled,
-				(state, { payload }) => {
-					// Handle single instrument fetch
 				}
 			);
 	},

@@ -3,13 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllBookings = exports.updateBookingStatus = exports.createBooking = void 0;
+exports.getAllBookingsByUserId = exports.getAllBookings = exports.updateBookingStatus = exports.createBooking = void 0;
 const prismaClient_1 = __importDefault(require("../models/prismaClient"));
 const validators_1 = require("../libs/validators"); // Import the Zod schemas and type
 // Create a new booking
 const createBooking = async (req, res) => {
     // Validate the request body with Zod
     const parsed = validators_1.createBookingSchema.safeParse(req.body);
+    console.log(req.body);
     if (!parsed.success) {
         return res.status(400).json({
             message: "Validation failed",
@@ -59,8 +60,9 @@ const createBooking = async (req, res) => {
             return booking;
         });
         // Type-safe the response with Zod validation and BookingResponse type
-        const parsedBooking = validators_1.bookingResponseSchema.parse(bookingTransaction);
-        res.status(201).json(parsedBooking);
+        res
+            .status(201)
+            .json({ message: "Booking Successful", data: bookingTransaction });
     }
     catch (error) {
         console.error(error);
@@ -72,11 +74,11 @@ const createBooking = async (req, res) => {
 exports.createBooking = createBooking;
 // Update booking status (admin functionality)
 const updateBookingStatus = async (req, res) => {
-    const { bookingId, status, } = req.body;
-    if (!bookingId || !status) {
+    const { bookingId, receiptId, status, } = req.body;
+    if (!bookingId || !status || !receiptId) {
         return res
             .status(400)
-            .json({ message: "Booking ID and status are required" });
+            .json({ message: "Booking ID , Receipt ID and status are required" });
     }
     try {
         // 1. Check if the booking exists
@@ -89,9 +91,23 @@ const updateBookingStatus = async (req, res) => {
         // 2. Update the booking status
         const updatedBooking = await prismaClient_1.default.booking.update({
             where: { id: bookingId },
-            data: { status },
+            data: { status: status === "VERIFIED" ? "PURCHASED" : "REJECTED" },
         });
-        res.status(200).json(updatedBooking);
+        // 2. Update the receipt status
+        const receipt = await prismaClient_1.default.receipt.findUnique({
+            where: { id: receiptId },
+        });
+        if (!receipt) {
+            return res.status(404).json({ message: "Receipt not found" });
+        }
+        const updatedReceipt = await prismaClient_1.default.receipt.update({
+            where: { id: receiptId },
+            data: {
+                status,
+                verifiedAt: status === "VERIFIED" ? new Date().toISOString() : null,
+            },
+        });
+        res.status(200).json({ updatedBooking, updatedReceipt });
     }
     catch (error) {
         console.error(error);
@@ -104,7 +120,19 @@ exports.updateBookingStatus = updateBookingStatus;
 // Function to get all bookings (for admin)
 const getAllBookings = async (req, res) => {
     try {
-        const bookings = await prismaClient_1.default.booking.findMany();
+        const bookings = await prismaClient_1.default.booking.findMany({
+            include: {
+                receipts: true,
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        username: true,
+                    },
+                },
+            },
+        });
+        // Respond with the bookings and their receipts
         res.status(200).json(bookings);
     }
     catch (error) {
@@ -115,3 +143,28 @@ const getAllBookings = async (req, res) => {
     }
 };
 exports.getAllBookings = getAllBookings;
+// Function to get all bookings for a specific user
+const getAllBookingsByUserId = async (req, res) => {
+    const userId = req.params.userId;
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+    try {
+        const bookings = await prismaClient_1.default.booking.findMany({
+            where: { userId },
+            include: {
+                instrument: true,
+                receipts: true,
+            },
+        });
+        res.status(200).json(bookings);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Error fetching user bookings",
+            error: error.message,
+        });
+    }
+};
+exports.getAllBookingsByUserId = getAllBookingsByUserId;

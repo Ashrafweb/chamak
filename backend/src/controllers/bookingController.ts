@@ -1,14 +1,11 @@
 import { Request, Response } from "express";
-import { z } from "zod";
 import prisma from "../models/prismaClient";
-import { createBookingSchema, bookingResponseSchema } from "../libs/validators"; // Import the Zod schemas and type
-import { BookingResponse } from "../types";
-
+import { createBookingSchema } from "../libs/validators"; // Import the Zod schemas and type
 // Create a new booking
 export const createBooking = async (req: Request, res: Response) => {
 	// Validate the request body with Zod
 	const parsed = createBookingSchema.safeParse(req.body);
-
+	console.log(req.body);
 	if (!parsed.success) {
 		return res.status(400).json({
 			message: "Validation failed",
@@ -67,10 +64,10 @@ export const createBooking = async (req: Request, res: Response) => {
 		});
 
 		// Type-safe the response with Zod validation and BookingResponse type
-		const parsedBooking: BookingResponse =
-			bookingResponseSchema.parse(bookingTransaction);
 
-		res.status(201).json(parsedBooking);
+		res
+			.status(201)
+			.json({ message: "Booking Successful", data: bookingTransaction });
 	} catch (error: any) {
 		console.error(error);
 		res
@@ -83,14 +80,18 @@ export const createBooking = async (req: Request, res: Response) => {
 export const updateBookingStatus = async (req: Request, res: Response) => {
 	const {
 		bookingId,
+		receiptId,
 		status,
-	}: { bookingId: number; status: "PENDING" | "PURCHASED" | "EXPIRED" } =
-		req.body;
+	}: {
+		bookingId: string;
+		receiptId: string;
+		status: "VERIFIED" | "REJECTED";
+	} = req.body;
 
-	if (!bookingId || !status) {
+	if (!bookingId || !status || !receiptId) {
 		return res
 			.status(400)
-			.json({ message: "Booking ID and status are required" });
+			.json({ message: "Booking ID , Receipt ID and status are required" });
 	}
 
 	try {
@@ -106,10 +107,27 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 		// 2. Update the booking status
 		const updatedBooking = await prisma.booking.update({
 			where: { id: bookingId },
-			data: { status },
+			data: { status: status === "VERIFIED" ? "PURCHASED" : "REJECTED" },
 		});
 
-		res.status(200).json(updatedBooking);
+		// 2. Update the receipt status
+		const receipt = await prisma.receipt.findUnique({
+			where: { id: receiptId },
+		});
+
+		if (!receipt) {
+			return res.status(404).json({ message: "Receipt not found" });
+		}
+
+		const updatedReceipt = await prisma.receipt.update({
+			where: { id: receiptId },
+			data: {
+				status,
+				verifiedAt: status === "VERIFIED" ? new Date().toISOString() : null,
+			},
+		});
+
+		res.status(200).json({ updatedBooking, updatedReceipt });
 	} catch (error: any) {
 		console.error(error);
 		res
@@ -121,12 +139,50 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 // Function to get all bookings (for admin)
 export const getAllBookings = async (req: Request, res: Response) => {
 	try {
-		const bookings = await prisma.booking.findMany();
+		const bookings = await prisma.booking.findMany({
+			include: {
+				receipts: true,
+				user: {
+					select: {
+						id: true,
+						email: true,
+						username: true,
+					},
+				},
+			},
+		});
+
+		// Respond with the bookings and their receipts
 		res.status(200).json(bookings);
 	} catch (error: any) {
 		console.error(error);
 		res
 			.status(500)
 			.json({ message: "Error fetching bookings", error: error.message });
+	}
+};
+// Function to get all bookings for a specific user
+export const getAllBookingsByUserId = async (req: Request, res: Response) => {
+	const userId = req.params.userId;
+
+	if (!userId) {
+		return res.status(400).json({ message: "User ID is required" });
+	}
+
+	try {
+		const bookings = await prisma.booking.findMany({
+			where: { userId },
+			include: {
+				instrument: true,
+				receipts: true,
+			},
+		});
+		res.status(200).json(bookings);
+	} catch (error: any) {
+		console.error(error);
+		res.status(500).json({
+			message: "Error fetching user bookings",
+			error: error.message,
+		});
 	}
 };
